@@ -26,16 +26,16 @@ CognitoFlow is a comprehensive workflow automation platform designed for financi
 
 ## 📋 Table of Contents
 
-- [Getting Started](#getting-started)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-- [Architecture](#architecture)
-- [API Reference](#api-reference)
-- [Development](#development)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
+- [🎯 Getting Started](#-getting-started)
+- [💾 Installation](#-installation)
+- [⚙️ Configuration](#%EF%B8%8F-configuration)
+- [📘 Usage](#-usage)
+- [🏗️ Architecture](#%EF%B8%8F-architecture)
+- [📚 API Reference](#-api-reference)
+- [🛠️ Development](#%EF%B8%8F-development)
+- [🚢 Deployment](#-deployment)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
 
 ---
 
