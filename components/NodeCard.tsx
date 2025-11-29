@@ -54,12 +54,7 @@ const AddNextButton: React.FC<{ parentId: string; onAddNode?: (parentId: string,
     const handleDragEnter = (e: React.DragEvent) => { 
         e.preventDefault(); 
         if (e.dataTransfer.types.includes('application/json')) {
-            try {
-                const data = JSON.parse(e.dataTransfer.getData('application/json'));
-                if (data.type === 'NEW_NODE' || (data.type === 'MOVE_NODE' && data.nodeId !== parentId)) {
-                    setIsDragOver(true);
-                }
-            } catch (err) {}
+            setIsDragOver(true);
         }
     };
     const handleDragLeave = () => setIsDragOver(false);
@@ -115,16 +110,9 @@ export const NodeCard: React.FC<NodeCardProps> = ({ node, isSelected, onSelect, 
     const handleDragEnter = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        // Check content type only, as reading data is restricted in dragEnter
         if (e.dataTransfer.types.includes('application/json')) {
-            try {
-                const data = JSON.parse(e.dataTransfer.getData('application/json'));
-                if (data.type === 'MOVE_NODE' && data.nodeId !== node.id) {
-                    setIsDragOver(true);
-                }
-                if (data.type === 'NEW_NODE') {
-                    setIsDragOver(true);
-                }
-            } catch (err) { /* ignore */ }
+            setIsDragOver(true);
         }
     };
     
@@ -176,7 +164,7 @@ export const NodeCard: React.FC<NodeCardProps> = ({ node, isSelected, onSelect, 
 
     return (
         <div
-            onClick={() => onSelect(node.id)}
+            onClick={(e) => { e.stopPropagation(); onSelect(node.id); }}
             draggable={isDraggable}
             {...dragHandlers}
             className={`${baseClasses} ${selectedClasses} ${widthClass} ${colors.bg} ${isDraggable ? 'cursor-grab' : 'cursor-default'}`}
@@ -211,7 +199,7 @@ export const NodeCard: React.FC<NodeCardProps> = ({ node, isSelected, onSelect, 
                 <p onClick={() => setIsEditingDesc(true)} className="text-sm text-text-secondary mt-2 min-h-[20px]">{node.data.description || <span className="text-gray-500 italic">[+ Add Description]</span>}</p>
             )}
 
-            {isLeafNode && node.type === NodeType.TASK && (
+            {isLeafNode && (
                 <AddNextButton parentId={node.id} onAddNode={onAddNode} onDropNode={onDropNode} isPulsing={isWaitingForNextNode} />
             )}
         </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { FlowState, FlowNode, NodeData, NodeType, FlowStatus } from '../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,6 +8,7 @@ import { FlowView } from './FlowView';
 import { NodeDetailPanel } from './NodeDetailPanel';
 import { SmartSuggestionsPanel } from './SmartSuggestionsPanel';
 import { DataPanel } from './DataPanel';
+import { NaturalLanguageCommander } from './NaturalLanguageCommander';
 
 
 interface FlowEditorPageProps {
@@ -20,6 +20,8 @@ export const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ initialFlowState
   const [flow, setFlow] = useState<FlowState>(initialFlowState);
   const [isSuggestionsOpen, setSuggestionsOpen] = useState(true);
   const [isDataPanelOpen, setDataPanelOpen] = useState(false);
+  const [isCommanderOpen, setIsCommanderOpen] = useState(false);
+  const [isProcessingCommand, setIsProcessingCommand] = useState(false);
 
   const handleSelectNode = useCallback((id: string | null) => {
     setFlow(prevFlow => ({ ...prevFlow, selectedNodeId: id }));
@@ -54,6 +56,18 @@ export const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ initialFlowState
         parentId,
         childrenIds: [],
       };
+      
+      // If adding an agent, give it a default config
+      if (type === NodeType.AGENT) {
+          newNode.data.agentConfig = {
+              persona: 'Assistant',
+              objective: 'Help with the task',
+              model: 'gemini-2.5-flash',
+              temperature: 0.7,
+              topP: 0.95
+          };
+          newNode.data.title = 'New Agent';
+      }
 
       const newNodes = {
         ...prevFlow.nodes,
@@ -84,11 +98,6 @@ export const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ initialFlowState
         return prevFlow;
       }
       
-      // Prevent dropping on a direct parent (no change)
-      if (draggedNode.parentId === targetNodeId) {
-        return prevFlow;
-      }
-  
       // Cycle detection: check if the target is a descendant of the dragged node
       let current: FlowNode | undefined = targetNode;
       while (current) {
@@ -111,10 +120,13 @@ export const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ initialFlowState
         }
       }
   
-      // 2. Add to new parent
+      // 2. Add to new parent (handle case where parent is same, it will append to end)
+      // We must get the latest state of targetNode from newNodes if it was the oldParent
+      const updatedTargetNode = newNodes[targetNodeId] || targetNode;
+
       newNodes[targetNodeId] = {
-        ...targetNode,
-        childrenIds: [...targetNode.childrenIds, draggedNodeId],
+        ...updatedTargetNode,
+        childrenIds: [...updatedTargetNode.childrenIds, draggedNodeId],
       };
   
       // 3. Update dragged node's parent
@@ -127,6 +139,29 @@ export const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ initialFlowState
     });
   }, []);
 
+  const handleCommand = (command: string) => {
+    setIsProcessingCommand(true);
+    // Simulate AI processing delay
+    setTimeout(() => {
+        const lower = command.toLowerCase();
+        
+        // Simple heuristic for "Add Agent" command
+        if ((lower.includes('add') || lower.includes('create')) && lower.includes('agent')) {
+            const targetId = flow.selectedNodeId || flow.rootId;
+            if (targetId) {
+                handleAddNode(targetId, NodeType.AGENT);
+            }
+        } else if ((lower.includes('add') || lower.includes('create')) && lower.includes('task')) {
+             const targetId = flow.selectedNodeId || flow.rootId;
+            if (targetId) {
+                handleAddNode(targetId, NodeType.TASK);
+            }
+        }
+        
+        setIsProcessingCommand(false);
+        setIsCommanderOpen(false);
+    }, 1000);
+  };
 
   const selectedNode = useMemo(() => {
     if (!flow.selectedNodeId) return null;
@@ -153,6 +188,7 @@ export const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ initialFlowState
         onViewCompliance={() => console.log("View compliance")}
         onExport={() => console.log("Export flow")}
         onToggleHeatmap={() => console.log("Toggle heatmap")}
+        onOpenCommander={() => setIsCommanderOpen(true)}
         showHeatmap={false}
         isProcessing={false}
         hasScorecard={false}
@@ -160,7 +196,7 @@ export const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ initialFlowState
         permissions={{ canEdit: true, canRun: true }}
         flowExists={!!rootNode}
       />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         <NodePalette />
         <main className="flex-1 flex flex-col relative">
            <div className="flex-grow relative">
@@ -173,6 +209,8 @@ export const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ initialFlowState
                     onUpdateNodeData={handleUpdateNodeData}
                     onRunNode={() => {}}
                     onCritiqueNode={() => {}}
+                    isSuggestionsOpen={isSuggestionsOpen}
+                    onToggleSuggestions={() => setSuggestionsOpen(o => !o)}
                 />
                 <SmartSuggestionsPanel
                     isOpen={isSuggestionsOpen}
@@ -181,6 +219,13 @@ export const FlowEditorPage: React.FC<FlowEditorPageProps> = ({ initialFlowState
                     rootNode={rootNode}
                     onAddPiiGuardrail={() => console.log("Add PII Guardrail")}
                 />
+                {isCommanderOpen && (
+                    <NaturalLanguageCommander 
+                        onCommand={handleCommand}
+                        onClose={() => setIsCommanderOpen(false)}
+                        isProcessing={isProcessingCommand}
+                    />
+                )}
            </div>
           <DataPanel 
             runHistory={[]} 

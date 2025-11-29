@@ -58,6 +58,8 @@ You must output a JSON object: {
   const config: any = {
     systemInstruction: systemInstruction,
     tools: geminiTools,
+    ...(agentConfig.temperature !== undefined && { temperature: agentConfig.temperature }),
+    ...(agentConfig.topP !== undefined && { topP: agentConfig.topP }),
   };
 
   if (!hasSearch) {
@@ -65,7 +67,7 @@ You must output a JSON object: {
   }
 
   const response = await ai.models.generateContent({
-    model: modelName,
+    model: agentConfig.model || modelName,
     contents: prompt,
     config,
   });

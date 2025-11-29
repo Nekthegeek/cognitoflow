@@ -1,9 +1,6 @@
-
-
-
 import React from 'react';
 import { FlowStatus } from '../types';
-import { ChevronLeft, Activity, Zap, Beaker, Play, Target, Shield, Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Activity, Zap, Beaker, Play, Target, Shield, Loader2, CheckCircle, XCircle, AlertCircle, Sparkles } from 'lucide-react';
 
 interface FlowToolbarProps {
   flowName: string;
@@ -18,6 +15,7 @@ interface FlowToolbarProps {
   onExport: () => void;
   onGoBack: () => void;
   onToggleHeatmap: () => void;
+  onOpenCommander: () => void;
   showHeatmap: boolean;
   isProcessing: boolean;
   hasScorecard: boolean;
@@ -42,6 +40,7 @@ export const FlowToolbar: React.FC<FlowToolbarProps> = ({
   onExport,
   onGoBack,
   onToggleHeatmap,
+  onOpenCommander,
   showHeatmap,
   isProcessing,
   hasScorecard,
@@ -100,6 +99,9 @@ export const FlowToolbar: React.FC<FlowToolbarProps> = ({
 
         {permissions.canEdit && (
           <>
+            <button onClick={onOpenCommander} disabled={!flowExists} className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-indigo-400 rounded-md text-xs font-bold transition-colors border border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              <Sparkles size={14} /> AI Edit
+            </button>
             <button onClick={onOptimize} disabled={!flowExists} className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-yellow-400 rounded-md text-xs font-bold transition-colors border border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
               <Zap size={14} /> Optimize
             </button>

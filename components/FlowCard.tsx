@@ -1,10 +1,13 @@
 import React from 'react';
 import { DashboardFlow } from '../types';
-import { Edit, BarChart2, Play, AlertTriangle, Clock, DollarSign, Check, Calendar, GitMerge, UserCheck, RefreshCw, Archive, RotateCcw, MessageSquare, Brain, Wrench, Gavel, Target, FileText } from 'lucide-react';
+import { Edit, BarChart2, Play, AlertTriangle, Clock, DollarSign, Check, Calendar, GitMerge, UserCheck, RefreshCw, Archive, RotateCcw, MessageSquare, Brain, Wrench, Gavel, Target, FileText, Sparkles, Bot } from 'lucide-react';
 
 interface FlowCardProps {
   flow: DashboardFlow;
   onOpenFlow: (flowId: string) => void;
+  viewMode: 'grid' | 'list';
+  isExpanded: boolean;
+  onExpandToggle: () => void;
 }
 
 const iconMap: { [key: string]: React.ReactElement } = {
@@ -13,6 +16,9 @@ const iconMap: { [key: string]: React.ReactElement } = {
   '✍️': <FileText size={20} />,
   '📧': <MessageSquare size={20} />,
   'Default': <GitMerge size={20} />,
+  '✨': <Sparkles size={20} />,
+  '🤖': <Bot size={20} />,
+  '📄': <FileText size={20} />,
 };
 
 const Metric = ({ icon, label, value }: { icon: React.ReactElement; label: string; value: string | number }) => (
@@ -22,7 +28,7 @@ const Metric = ({ icon, label, value }: { icon: React.ReactElement; label: strin
   </div>
 );
 
-export const FlowCard: React.FC<FlowCardProps> = ({ flow, onOpenFlow }) => {
+export const FlowCard: React.FC<FlowCardProps> = ({ flow, onOpenFlow, viewMode, isExpanded, onExpandToggle }) => {
   const statusStyles = {
     ACTIVE: {
       healthy: {
@@ -86,14 +92,56 @@ export const FlowCard: React.FC<FlowCardProps> = ({ flow, onOpenFlow }) => {
 
   const style = getStatusStyle();
 
+  const handleActionClick = (e: React.MouseEvent, action?: () => void) => {
+    e.stopPropagation();
+    action?.();
+  }
+
+  if (viewMode === 'list') {
+    return (
+      <div onClick={onExpandToggle} className={`relative bg-bg-card border border-border-primary rounded-lg p-4 flex items-center gap-4 transition-all duration-200 hover:bg-bg-hover hover:border-accent-primary/50 cursor-pointer ${flow.status === 'PAUSED' ? 'opacity-80' : ''} ${isExpanded ? 'bg-bg-hover' : ''}`}>
+        <div className={`w-1.5 h-10 rounded-full ${style.border.replace('border-l-4', 'bg-').replace('border-', 'bg-')}`}></div>
+        
+        <div className="flex items-center gap-3 flex-shrink-0 w-8">
+            {iconMap[flow.icon] || iconMap['Default']}
+        </div>
+
+        <div className="flex-1" style={{minWidth: 0}}>
+            <h3 onClick={(e) => handleActionClick(e, () => onOpenFlow(flow.id))} className="font-semibold text-text-primary cursor-pointer hover:underline truncate">{flow.title}</h3>
+            <p className="text-sm text-text-tertiary truncate">{flow.description}</p>
+        </div>
+
+        <div className="flex-1 flex items-center justify-end gap-6 text-sm text-text-secondary">
+            {flow.warning && <AlertTriangle size={16} className="text-status-warning" title={flow.warning.title} />}
+            <Metric icon={<Clock size={16} className="text-text-tertiary" />} label="Avg Runtime" value={`${flow.metrics.avgRuntime}s`} />
+            <Metric icon={<Calendar size={16} className="text-text-tertiary" />} label="Last Run" value={new Date(flow.metrics.lastRun).toLocaleDateString()} />
+        </div>
+        
+        <div className="flex items-center gap-3 w-48 justify-end">
+            <div className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full ${style.badgeBg} ${style.badgeText}`}>
+                <div className={`w-2 h-2 rounded-full ${style.border.replace('border-', 'bg-')}`}></div>
+                {flow.status}
+            </div>
+            <div className={`font-bold text-lg ${style.healthText}`}>{flow.health}%</div>
+        </div>
+
+        <div className="flex gap-2">
+            <button onClick={(e) => handleActionClick(e, () => onOpenFlow(flow.id))} className="px-4 h-9 flex items-center gap-2 text-sm font-medium bg-bg-hover/50 border border-border-primary rounded-lg text-text-secondary hover:bg-bg-hover hover:border-border-hover">
+                Open
+            </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`relative bg-bg-card border border-border-primary border-l-4 ${style.border} rounded-xl p-6 flex flex-col gap-4 transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-2xl hover:border-accent-primary/50 ${flow.status === 'PAUSED' ? 'opacity-80' : ''}`}>
+    <div onClick={onExpandToggle} className={`relative bg-bg-card border border-border-primary border-l-4 ${style.border} rounded-xl p-6 flex flex-col gap-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-2xl hover:border-accent-primary/50 cursor-pointer ${flow.status === 'PAUSED' ? 'opacity-80' : ''} ${isExpanded ? 'scale-[1.02] !border-accent-primary/80 shadow-glow-primary' : ''}`}>
       {/* Header */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           {iconMap[flow.icon] || iconMap['Default']}
           <div>
-            <h3 onClick={() => onOpenFlow(flow.id)} className="font-semibold text-lg text-text-primary cursor-pointer hover:underline">{flow.title}</h3>
+            <h3 onClick={(e) => handleActionClick(e, () => onOpenFlow(flow.id))} className="font-semibold text-lg text-text-primary cursor-pointer hover:underline">{flow.title}</h3>
             <p className="text-sm text-text-tertiary line-clamp-1">{flow.description}</p>
           </div>
         </div>
@@ -113,7 +161,7 @@ export const FlowCard: React.FC<FlowCardProps> = ({ flow, onOpenFlow }) => {
             <AlertTriangle size={16} /> PERFORMANCE WARNING
           </div>
           <p className="text-text-secondary mb-3">{flow.warning.details}</p>
-          <button className="text-xs font-bold text-status-warning hover:underline">{flow.warning.action.label} →</button>
+          <button onClick={(e) => handleActionClick(e)} className="text-xs font-bold text-status-warning hover:underline">{flow.warning.action.label} →</button>
         </div>
       )}
       {flow.status === 'PAUSED' && flow.pausedInfo && (
@@ -128,8 +176,8 @@ export const FlowCard: React.FC<FlowCardProps> = ({ flow, onOpenFlow }) => {
           </div>
           <p className="text-text-secondary mb-3 font-mono text-xs">{flow.errorInfo.details}</p>
           <div className="flex gap-2">
-            <button className="text-xs font-bold text-status-error hover:underline">View Error Logs</button>
-            <button className="text-xs font-bold text-status-error hover:underline">Fix Configuration</button>
+            <button onClick={(e) => handleActionClick(e)} className="text-xs font-bold text-status-error hover:underline">View Error Logs</button>
+            <button onClick={(e) => handleActionClick(e)} className="text-xs font-bold text-status-error hover:underline">Fix Configuration</button>
           </div>
         </div>
       )}
@@ -145,30 +193,30 @@ export const FlowCard: React.FC<FlowCardProps> = ({ flow, onOpenFlow }) => {
       {/* Actions */}
       <div className="flex justify-between items-center mt-auto pt-4 border-t border-border-primary">
         <div className="flex gap-2">
-          <button className="px-4 h-9 flex items-center gap-2 text-sm font-medium bg-bg-hover/50 border border-border-primary rounded-lg text-text-secondary hover:bg-bg-hover hover:border-border-hover">
+          <button onClick={(e) => handleActionClick(e)} className="px-4 h-9 flex items-center gap-2 text-sm font-medium bg-bg-hover/50 border border-border-primary rounded-lg text-text-secondary hover:bg-bg-hover hover:border-border-hover">
             <Edit size={14} /> Edit
           </button>
-          <button className="px-4 h-9 flex items-center gap-2 text-sm font-medium bg-bg-hover/50 border border-border-primary rounded-lg text-text-secondary hover:bg-bg-hover hover:border-border-hover">
+          <button onClick={(e) => handleActionClick(e)} className="px-4 h-9 flex items-center gap-2 text-sm font-medium bg-bg-hover/50 border border-border-primary rounded-lg text-text-secondary hover:bg-bg-hover hover:border-border-hover">
             <BarChart2 size={14} /> Analytics
           </button>
         </div>
         <div className="flex gap-2">
           {flow.status === 'PAUSED' && (
-            <button className="px-5 h-9 flex items-center gap-2 text-sm font-semibold bg-gradient-to-r from-accent-secondary to-accent-primary text-white rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-glow-primary">
+            <button onClick={(e) => handleActionClick(e)} className="px-5 h-9 flex items-center gap-2 text-sm font-semibold bg-gradient-to-r from-accent-secondary to-accent-primary text-white rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-glow-primary">
               <Play size={14} /> Resume
             </button>
           )}
           {flow.status === 'ACTIVE' && (
-            <button className="px-5 h-9 flex items-center gap-2 text-sm font-semibold bg-gradient-to-r from-accent-secondary to-accent-primary text-white rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-glow-primary">
+            <button onClick={(e) => handleActionClick(e)} className="px-5 h-9 flex items-center gap-2 text-sm font-semibold bg-gradient-to-r from-accent-secondary to-accent-primary text-white rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-glow-primary">
               <Play size={14} /> Run Now
             </button>
           )}
           {flow.status === 'FAILED' && (
              <>
-              <button className="px-4 h-9 flex items-center gap-2 text-sm font-medium bg-bg-hover/50 border border-border-primary rounded-lg text-text-secondary hover:bg-bg-hover hover:border-border-hover hover:text-status-error">
+              <button onClick={(e) => handleActionClick(e)} className="px-4 h-9 flex items-center gap-2 text-sm font-medium bg-bg-hover/50 border border-border-primary rounded-lg text-text-secondary hover:bg-bg-hover hover:border-border-hover hover:text-status-error">
                 <Archive size={14} /> Archive
               </button>
-              <button className="px-5 h-9 flex items-center gap-2 text-sm font-semibold bg-gradient-to-r from-accent-secondary to-accent-primary text-white rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-glow-primary">
+              <button onClick={(e) => handleActionClick(e)} className="px-5 h-9 flex items-center gap-2 text-sm font-semibold bg-gradient-to-r from-accent-secondary to-accent-primary text-white rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-glow-primary">
                 <RotateCcw size={14} /> Retry
               </button>
              </>

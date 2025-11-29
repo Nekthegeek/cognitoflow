@@ -39,6 +39,9 @@ export interface AgentConfig {
   allowedTools?: string[];
   memoryEnabled?: boolean;
   autonomyLevel?: number;
+  model?: string;
+  temperature?: number;
+  topP?: number;
 }
 
 export interface CritiqueConfig {

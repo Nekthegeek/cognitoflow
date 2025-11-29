@@ -9,6 +9,7 @@ const PaletteItem: React.FC<{ item: any }> = ({ item }) => {
 
     const handleDragStart = (e: React.DragEvent) => {
         e.dataTransfer.setData('application/json', JSON.stringify({ type: 'NEW_NODE', nodeType: item.type }));
+        e.dataTransfer.effectAllowed = 'move';
         if (previewRef.current) {
             e.dataTransfer.setDragImage(previewRef.current, 144, 50); // Center the preview on the cursor
         }
@@ -90,7 +91,7 @@ export const NodePalette: React.FC = () => {
             </div>
             
             {isAdvancedOpen && (
-                <div className="space-y-3 animate-in fade-in duration-300">
+                <div className="space-y-3 animate-fade-in">
                     {advancedItems.map(item => (
                         <PaletteItem key={item.type} item={item} />
                     ))}

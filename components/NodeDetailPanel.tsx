@@ -191,6 +191,48 @@ export const NodeDetailPanel: React.FC<NodeDetailPanelProps> = ({ node, onUpdate
                           </div>
                       )}
                   </div>
+
+                  {/* Model Parameters */}
+                  <div className="bg-black/20 p-3 rounded-md space-y-3">
+                      <label className="text-xs font-semibold text-gray-400">Model Parameters</label>
+                      <div>
+                          <label className="text-[10px] text-gray-500 block mb-1">Model</label>
+                          <select 
+                              value={node.data.agentConfig?.model || 'gemini-2.5-flash'}
+                              onChange={(e) => onUpdateData(node.id, { agentConfig: { ...node.data.agentConfig, model: e.target.value } as any })}
+                              className="w-full bg-black/40 border border-indigo-500/30 rounded p-2 text-xs text-indigo-100"
+                          >
+                              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                              <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
+                          </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                          <div>
+                              <div className="flex justify-between items-center mb-1">
+                                  <label className="text-[10px] text-gray-500">Temperature</label>
+                                  <span className="text-[10px] text-indigo-400 font-mono">{node.data.agentConfig?.temperature ?? 0.7}</span>
+                              </div>
+                              <input 
+                                  type="range" min="0" max="1" step="0.1"
+                                  value={node.data.agentConfig?.temperature ?? 0.7}
+                                  onChange={(e) => onUpdateData(node.id, { agentConfig: { ...node.data.agentConfig, temperature: parseFloat(e.target.value) } as any })}
+                                  className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                              />
+                          </div>
+                          <div>
+                              <div className="flex justify-between items-center mb-1">
+                                  <label className="text-[10px] text-gray-500">Top-P</label>
+                                  <span className="text-[10px] text-indigo-400 font-mono">{node.data.agentConfig?.topP ?? 0.95}</span>
+                              </div>
+                              <input 
+                                  type="range" min="0" max="1" step="0.05"
+                                  value={node.data.agentConfig?.topP ?? 0.95}
+                                  onChange={(e) => onUpdateData(node.id, { agentConfig: { ...node.data.agentConfig, topP: parseFloat(e.target.value) } as any })}
+                                  className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                              />
+                          </div>
+                      </div>
+                  </div>
                </div>
             )}
 

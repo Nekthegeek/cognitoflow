@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { FlowState, NodeType, FlowNode } from '../types';
 import { NodeCard } from './NodeCard';
 import { FlowMinimap } from './FlowMinimap';
-import { Plus, Minus, Maximize, Hand } from 'lucide-react';
+import { Plus, Minus, Maximize, Lightbulb } from 'lucide-react';
 
 interface Permissions {
   canEdit: boolean;
@@ -24,6 +24,8 @@ interface FlowViewProps {
   onDropNode?: (draggedId: string, targetId: string) => void;
   onUpdateNodeData?: (id: string, data: Partial<FlowNode['data']>) => void;
   pulsingAddNextButtonNodeId?: string | null;
+  isSuggestionsOpen: boolean;
+  onToggleSuggestions: () => void;
 }
 
 const TreeNode: React.FC<{ 
@@ -99,58 +101,91 @@ const TreeNode: React.FC<{
 
 
 export const FlowView: React.FC<FlowViewProps> = (props) => {
+  const { isSuggestionsOpen, onToggleSuggestions } = props;
   const [isPanning, setIsPanning] = useState(false);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-        setIsPanning(true);
+    if (e.target === containerRef.current) {
+      setIsPanning(true);
     }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isPanning) {
+      setPan(p => ({ x: p.x + e.movementX, y: p.y + e.movementY }));
+    }
+  };
+  
+  const handleFitToView = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
   };
 
   const nodeCount = Object.keys(props.flow.nodes).length;
 
   return (
     <div 
+      ref={containerRef}
       onMouseDown={handleMouseDown}
       onMouseUp={() => setIsPanning(false)}
       onMouseLeave={() => setIsPanning(false)}
+      onMouseMove={handleMouseMove}
       className={`
-        overflow-auto h-full p-16 min-w-full flex items-start relative 
+        overflow-hidden h-full w-full flex relative 
         ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}
         ${props.flow.rootId ? 'flow-canvas-bg' : ''}
       `}
     >
-      {props.flow.mode === 'PLANNING' && nodeCount > 2 && <FlowMinimap flow={props.flow} />}
-      
-      {props.flow.rootId ? (
+      <div
+        style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: 'center center', width: '100%', height: '100%' }}
+        className="p-16 flex items-start transition-transform duration-100 ease-out"
+      >
+        {props.flow.rootId ? (
           <TreeNode 
-            nodeId={props.flow.rootId} 
-            flow={props.flow} 
+            nodeId={props.flow.rootId}
+            flow={props.flow}
+            permissions={props.permissions}
             onSelect={props.onSelectNode}
             onRun={props.onRunNode}
             onCritique={props.onCritiqueNode}
-            permissions={props.permissions}
             onToggleMerge={props.onToggleMerge}
             onDelete={props.onDeleteNode}
             onMove={props.onMoveNode}
             onDecompose={props.onDecomposeNode}
             onAddNode={props.onAddNode}
             onDropNode={props.onDropNode}
-            heatmapMode={props.flow.heatmapMode}
+            heatmapMode={props.flow.heatmapMode} 
             onUpdateData={props.onUpdateNodeData}
             pulsingAddNextButtonNodeId={props.pulsingAddNextButtonNodeId}
           />
-      ) : (
+        ) : (
           <div className="m-auto text-center text-gray-500">
-              <p>Start by adding a node from the palette on the left.</p>
+            <p>Start by adding a node from the palette on the left.</p>
           </div>
-      )}
+        )}
+      </div>
+
+      {props.flow.mode === 'PLANNING' && nodeCount > 2 && <FlowMinimap flow={props.flow} />}
       
       {props.flow.rootId && (
         <div className="absolute bottom-4 right-4 flex flex-col gap-1.5 z-40">
-          <button title="Zoom In" className="w-10 h-10 flex items-center justify-center bg-gray-900/80 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"><Plus size={16} /></button>
-          <button title="Zoom Out" className="w-10 h-10 flex items-center justify-center bg-gray-900/80 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"><Minus size={16} /></button>
-          <button title="Fit to View" className="w-10 h-10 flex items-center justify-center bg-gray-900/80 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"><Maximize size={16} /></button>
+          <button onClick={() => setZoom(z => z * 1.2)} title="Zoom In" className="w-10 h-10 flex items-center justify-center bg-gray-900/80 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"><Plus size={16} /></button>
+          <button onClick={() => setZoom(z => z / 1.2)} title="Zoom Out" className="w-10 h-10 flex items-center justify-center bg-gray-900/80 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"><Minus size={16} /></button>
+          <button onClick={handleFitToView} title="Fit to View" className="w-10 h-10 flex items-center justify-center bg-gray-900/80 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"><Maximize size={16} /></button>
+          <button 
+            title="Toggle Smart Suggestions" 
+            onClick={onToggleSuggestions}
+            className={`w-10 h-10 flex items-center justify-center bg-gray-900/80 border rounded-lg transition-colors
+              ${isSuggestionsOpen 
+                ? 'border-yellow-500/50 text-yellow-400 bg-yellow-900/40' 
+                : 'border-gray-700 text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+          >
+            <Lightbulb size={16} />
+          </button>
         </div>
       )}
     </div>
