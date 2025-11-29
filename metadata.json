@@ -1,0 +1,5 @@
+{
+  "name": "CognitoFlow",
+  "description": "A goal-oriented reasoning engine that orchestrates AI agents to decompose complex goals into actionable sub-tasks with transparent chain-of-thought visualization.",
+  "requestFramePermissions": []
+}
