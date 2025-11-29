@@ -24,22 +24,24 @@ CognitoFlow is a comprehensive workflow automation platform designed for financi
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [🎯 Getting Started](#-getting-started)
-- [💾 Installation](#-installation)
-- [⚙️ Configuration](#%EF%B8%8F-configuration)
-- [📘 Usage](#-usage)
-- [🏗️ Architecture](#%EF%B8%8F-architecture)
-- [📚 API Reference](#-api-reference)
-- [🛠️ Development](#%EF%B8%8F-development)
-- [🚢 Deployment](#-deployment)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
+- [Getting Started](#getting-started)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Architecture](#architecture)
+- [API Reference](#api-reference)
+- [Development](#development)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## 🎯 Getting Started
+## Getting Started
+
+🎯 **Quick start guide**
 
 ### Prerequisites
 
@@ -72,7 +74,9 @@ Visit `http://localhost:3000` to access the CognitoFlow dashboard.
 
 ---
 
-## 💾 Installation
+## Installation
+
+💾 **Setting up CognitoFlow**
 
 ### Local Development
 
@@ -110,7 +114,9 @@ See [Deployment Guide](./docs/deployment.md) for detailed production setup instr
 
 ---
 
-## ⚙️ Configuration
+## Configuration
+
+⚙️ **Environment and workspace setup**
 
 ### Environment Variables
 
@@ -170,7 +176,9 @@ workspace:
 
 ---
 
-## 📘 Usage
+## Usage
+
+📘 **Working with flows and workflows**
 
 ### Creating Your First Flow
 
@@ -241,7 +249,9 @@ npm run cache:clear                 # Clear Redis cache
 
 ---
 
-## 🏗️ Architecture
+## Architecture
+
+🏗️ **System design and tech stack**
 
 ### System Overview
 
@@ -295,7 +305,9 @@ npm run cache:clear                 # Clear Redis cache
 
 ---
 
-## 📚 API Reference
+## API Reference
+
+📚 **REST API endpoints and examples**
 
 ### Authentication
 
@@ -383,7 +395,9 @@ Full API documentation available at `/api/docs` when running the server.
 
 ---
 
-## 🛠️ Development
+## Development
+
+🛠️ **Developer guide and workflows**
 
 ### Project Structure
 
@@ -466,7 +480,9 @@ npm run format
 
 ---
 
-## 🚢 Deployment
+## Deployment
+
+🚢 **Production deployment guide**
 
 ### Production Build
 
@@ -514,7 +530,9 @@ See [k8s/README.md](./k8s/README.md) for Kubernetes deployment instructions.
 
 ---
 
-## 🤝 Contributing
+## Contributing
+
+🤝 **How to contribute to CognitoFlow**
 
 We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
 
@@ -532,7 +550,9 @@ Please read our [Code of Conduct](./CODE_OF_CONDUCT.md) before contributing.
 
 ---
 
-## 📄 License
+## License
+
+📄 **MIT License**
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
