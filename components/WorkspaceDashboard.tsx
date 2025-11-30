@@ -426,24 +426,52 @@ const HeroSection = ({
     );
 };
 
-const MetricCard = ({ label, value, trend, trendColor }: { label: string, value: string, trend: string, trendColor: string }) => (
-    <div className="p-5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/5 cursor-pointer rounded-lg">
-        <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">{label}</div>
-        <div className="text-3xl font-bold text-text-primary">{value}</div>
-        <div className={`flex items-center justify-center gap-1 text-sm font-medium mt-1 ${trendColor}`}>
-            {trend.startsWith('↑') ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-            {trend}
-        </div>
-    </div>
-);
+const MetricCard = ({ label, value, helper, tone = 'neutral' }: { label: string, value: string, helper: string, tone?: 'positive' | 'negative' | 'neutral' }) => {
+    const toneColor = tone === 'positive' ? 'text-status-success' : tone === 'negative' ? 'text-status-error' : 'text-text-secondary';
+    const Icon = tone === 'positive' ? TrendingUp : tone === 'negative' ? TrendingDown : Sparkles;
 
-const QuickMetricsBar = () => (
+    return (
+        <div className="p-5 text-center transition-transform duration-200 hover:scale-105 hover:bg-white/5 cursor-pointer rounded-lg">
+            <div className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">{label}</div>
+            <div className="text-3xl font-bold text-text-primary">{value}</div>
+            <div className={`flex items-center justify-center gap-1 text-sm font-medium mt-1 ${toneColor}`}>
+                <Icon size={14} />
+                {helper}
+            </div>
+        </div>
+    );
+};
+
+const QuickMetricsBar = ({ metrics }: { metrics: { totalFlows: number; activeFlows: number; unhealthyFlows: number; avgSuccessRate: number; avgCost: number; avgRuntime: number; } }) => (
     <section className="mt-8 bg-bg-secondary border-y border-border-primary grid grid-cols-5 divide-x divide-border-primary">
-        <MetricCard label="Active Flows" value="2" trend="↑ +1 week" trendColor="text-status-success" />
-        <MetricCard label="Runs Today" value="23" trend="↑ +12 (52%)" trendColor="text-status-success" />
-        <MetricCard label="Success Rate" value="94.3%" trend="↓ -2.1%" trendColor="text-status-error" />
-        <MetricCard label="Cost Today" value="$4.87" trend="↓ -$1.20" trendColor="text-status-success" />
-        <MetricCard label="Time Saved" value="~2.5 hrs" trend="↑ +0.8 hrs" trendColor="text-status-success" />
+        <MetricCard
+            label="Active Flows"
+            value={`${metrics.activeFlows}`}
+            helper={`of ${metrics.totalFlows} total`}
+            tone="positive"
+        />
+        <MetricCard
+            label="Needs Attention"
+            value={`${metrics.unhealthyFlows}`}
+            helper={metrics.unhealthyFlows > 0 ? 'Issues detected' : 'All healthy'}
+            tone={metrics.unhealthyFlows > 0 ? 'negative' : 'positive'}
+        />
+        <MetricCard
+            label="Avg Success Rate"
+            value={`${metrics.avgSuccessRate.toFixed(1)}%`}
+            helper="Cross-flow average"
+            tone={metrics.avgSuccessRate >= 90 ? 'positive' : metrics.avgSuccessRate < 75 ? 'negative' : 'neutral'}
+        />
+        <MetricCard
+            label="Avg Cost / Run"
+            value={`$${metrics.avgCost.toFixed(3)}`}
+            helper="Modeled per-flow"
+        />
+        <MetricCard
+            label="Avg Runtime"
+            value={`${metrics.avgRuntime.toFixed(1)}s`}
+            helper="Recent run mean"
+        />
     </section>
 );
 
@@ -788,6 +816,30 @@ export const WorkspaceDashboard: React.FC<WorkspaceDashboardProps> = ({ flows, o
     return processedFlows;
   }, [flows, activeFilter, searchTerm, sortOption]);
 
+  const dashboardMetrics = useMemo(() => {
+    const totalFlows = flows.length;
+    const activeFlows = flows.filter(f => f.status === FlowStatus.ACTIVE).length;
+    const unhealthyFlows = flows.filter(f => f.status === FlowStatus.FAILED || f.health < 80).length;
+
+    const aggregate = flows.reduce((acc, flow) => {
+        acc.successRate += flow.metrics.successRate ?? 0;
+        acc.cost += flow.metrics.avgCost ?? 0;
+        acc.runtime += flow.metrics.avgRuntime ?? 0;
+        return acc;
+    }, { successRate: 0, cost: 0, runtime: 0 });
+
+    const divisor = totalFlows || 1;
+
+    return {
+        totalFlows,
+        activeFlows,
+        unhealthyFlows,
+        avgSuccessRate: aggregate.successRate / divisor,
+        avgCost: aggregate.cost / divisor,
+        avgRuntime: aggregate.runtime / divisor,
+    };
+  }, [flows]);
+
 
   const [workspace, setWorkspace] = useState<Workspace>(MOCK_WORKSPACE_OBJ);
   const [users, setUsers] = useState<Record<string, User>>(MOCK_USERS_DB);
@@ -997,7 +1049,7 @@ export const WorkspaceDashboard: React.FC<WorkspaceDashboardProps> = ({ flows, o
                 />
             </div>
             <div className="animate-slide-up-fade-in" style={{ animationDelay: '200ms' }}>
-                 <QuickMetricsBar />
+                 <QuickMetricsBar metrics={dashboardMetrics} />
             </div>
             <div className="animate-slide-up-fade-in" style={{ animationDelay: '300ms' }}>
                  <MainContent 
